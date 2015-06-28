@@ -1,4 +1,4 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 import argparse
 import cStringIO
 import hashlib
@@ -14,6 +14,7 @@ parser.add_argument('--appname', help='SAE app name')
 parser.add_argument('--from_date', help='from date')
 parser.add_argument('--to_date', help='to date')
 parser.add_argument('--secret_key', help='secret key')
+parser.add_argument('--output_path', help='output path')
 args = parser.parse_args()
 
 
@@ -51,4 +52,4 @@ for down_url in response['data']:
     tar = tarfile.open(
             fileobj=cStringIO.StringIO(
                 urllib2.urlopen(down_url).read()))
-    tar.extract(tar.getnames()[0], 'access_log_' + file_date)
+    tar.extract(tar.getnames()[0], args.output_path + '/access_log_' + file_date)
