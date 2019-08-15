@@ -1,55 +1,36 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import argparse
-import cStringIO
 import hashlib
+import cStringIO
+# import io
 import json
-import os
+import sys
 import re
 import tarfile
+from apibus_handler import SaeApibusAuthHandler
 import urllib2
 
 
 parser = argparse.ArgumentParser(description='Download sae logs.')
-parser.add_argument('--appname', help='SAE app name')
+parser.add_argument('--logs_type', help='storage,http,etc')
 parser.add_argument('--from_date', help='from date')
 parser.add_argument('--to_date', help='to date')
+parser.add_argument('--access_key', help='access key')
 parser.add_argument('--secret_key', help='secret key')
 parser.add_argument('--output_path', help='output path')
 args = parser.parse_args()
 
 
-def get_signature(request, secret_key):
-    sign = request.replace('&','')
-    sign += secret_key
+apibus_handler = SaeApibusAuthHandler(args.access_key, args.secret_key)
+opener = urllib2.build_opener(apibus_handler)
+response = json.load(opener.open('http://g.sae.sina.com.cn/log/%s/%s:%s/1-access' % (args.logs_type, args.from_date, args.to_date)))
 
-    md5 = hashlib.md5()
-    md5.update(sign)
-    return md5.hexdigest()
 
-api_url = 'http://dloadcenter.sae.sina.com.cn/interapi.php?'
-params = {
-    'act': 'log',
-    'appname': args.appname,
-    'from': args.from_date,
-    'to': args.to_date,
-    'type': 'http',
-    'type2': 'access',
-}
-
-request = '&'.join([k + '=' + v for k, v in sorted(params.items())])
-request_url = api_url + request + '&sign=' + get_signature(request, args.secret_key)
-
-# request api
-response = json.load(urllib2.urlopen(request_url))
-if response['errno'] != 0:
-    print response
-    os.exit()
-print '[#] request success'
-
-for down_url in response['data']:
-    file_date = re.compile(r'\d{4}-\d{2}-\d{2}').findall(down_url)[0]
+for down_url in response['Content']:
+    # file_date = re.compile(r'\d{4}-\d{2}-\d{2}').findall(down_url)[0]
+    file_date = down_url['date']
     print('Processing %s' % down_url)
     tar = tarfile.open(
             fileobj=cStringIO.StringIO(
-                urllib2.urlopen(down_url).read()))
+                urllib2.urlopen('http://g.sae.sina.com.cn' + down_url['uri']).read()))
     tar.extract(tar.getnames()[0], args.output_path + '/access_log_' + file_date)

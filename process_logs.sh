@@ -7,7 +7,7 @@ SECRET_KEY=$2
 OUTPUT_PATH=$3
 
 echo $BIN_PATH
-$BIN_PATH/get_sae_logs.py --appname="$APP_NAME" \
+echo $BIN_PATH/get_sae_logs.py --appname="$APP_NAME" \
   --from_date=`date -d '1 day ago' '+%Y%m%d'` \
   --to_date=`date -d '1 day ago' '+%Y%m%d'` \
   --secret_key=$SECRET_KEY \
